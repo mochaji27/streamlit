@@ -54,13 +54,22 @@ def main_page(type):
                 #st.success(score)
                 #csf = pycc.set
                 st.info("This is Experimental Machine Learning")
-                pycc.setup(df, target = target, silent=True)
+                pycc.setup(df, target = target, silent=True, train_size=0.75, normalize=True, normalize_method='zscore', feature_selection=True, fix_imbalance=True)
                 setup_df = pycc.pull()
                 best_clf = pycc.compare_models()
                 compare_df = pycc.pull()
                 st.dataframe(compare_df)
-                best_clf
                 pycc.evaluate_model(best_clf)
+                st.info("Use No 1 model to Hyperparameter Tuning")
+                tune_model = pycc.tune_model(best_clf, choose_better = True)
+                st.dataframe(pycc.pull())
+                pycc.plot_model(tune_model, plot = 'parameter', display_format='streamlit')
+                pycc.plot_model(tune_model, plot = 'feature_all', display_format='streamlit')
+                pycc.plot_model(tune_model, plot = 'auc', display_format='streamlit')
+                pycc.plot_model(tune_model, plot = 'confusion_matrix', display_format='streamlit')
+                st.write(tune_model)
+
+                #st.info("Best Parameter : " + tune_model.get_params)
                 #pycc.plot_model(best_clf, plot = 'auc')
 
 
