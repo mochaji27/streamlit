@@ -46,6 +46,7 @@ def main_page(type):
             X = df.drop(columns=target)
             #x = pd.get_dummies(data=x, columns=x.select_dtypes(exclude=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns)
             X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, test_size=0.25, random_state=2022)
+            tune_model, download = None, None
             if st.button('Go', key="key_classification_btn"):
                 #pipeline_optimizer = TPOTClassifier(generations=5, population_size=20, cv=5,
                 #                    random_state=42, verbosity=2, max_eval_time_mins=60)
@@ -58,46 +59,25 @@ def main_page(type):
                 setup_df = pycc.pull()
                 best_clf = pycc.compare_models()
                 compare_df = pycc.pull()
+                model_name = compare_df.iloc[0, 0]
                 st.dataframe(compare_df)
-                pycc.evaluate_model(best_clf)
-                st.info("Use No 1 model to Hyperparameter Tuning")
+                st.info("Use {} model to Hyperparameter Tuning".format(model_name))
                 tune_model = pycc.tune_model(best_clf, choose_better = True)
                 st.dataframe(pycc.pull())
-                pycc.plot_model(tune_model, plot = 'parameter', display_format='streamlit')
-                pycc.plot_model(tune_model, plot = 'feature_all', display_format='streamlit')
+                st.write(pycc.plot_model(tune_model, plot = 'parameter', display_format='streamlit'))
+                pycc.plot_model(tune_model, plot = 'feature', display_format='streamlit')
                 pycc.plot_model(tune_model, plot = 'auc', display_format='streamlit')
                 pycc.plot_model(tune_model, plot = 'confusion_matrix', display_format='streamlit')
                 st.write(tune_model)
 
                 #st.info("Best Parameter : " + tune_model.get_params)
                 #pycc.plot_model(best_clf, plot = 'auc')
-
-
-        else:
-            list_col_numeric = df.select_dtypes(include=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns
-            list_col_category = df.select_dtypes(exclude=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns
-            col1, col2 = st.columns(2)
-            selected_col_exc_cat = col1.multiselect('Select your column that exclude on ML by Category',
-                list_col_category,
-                []
-                )
-            selected_col_exc_num = col2.multiselect('Select your column that exclude on ML by Numeric',
-                list_col_numeric,
-                []
-                )
-                
-
-            target = st.selectbox("Select Your Target", list_col_numeric)
-            y = df[target].values
-            x = df.drop(columns=target).drop(columns=selected_col_exc_cat).drop(columns=selected_col_exc_num)
-            #x = pd.get_dummies(data=x, columns=x.select_dtypes(exclude=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns)
-            X_train, X_test, y_train, y_test = train_test_split(x, y, train_size=0.75, test_size=0.25, random_state=2022)
-            #if st.button('Go', key="key_regression_btn"):
-                #pipeline_optimizer = TPOTRegressor(generations=5, population_size=20, cv=5,
-                #                    random_state=42, verbosity=2)
-                #pipeline_optimizer.fit(X_train, y_train)
-                #score = pipeline_optimizer.score(X_test, y_test)
-                #st.success(score)
+            if tune_model is not None:
+                pycc.finalize_model(tune_model)
+                pycc.save_model(tune_model, "{}_{}".format(file_upload, model_name))
+                download = st.button("Download")
+            else:
+                del download
 
     
 #@st.cache()
@@ -108,6 +88,7 @@ def main_page(type):
 def data_profiling(df):
     return df.profile_report()
 
+#def download_model():
 
 
 if __name__=="__main__":
