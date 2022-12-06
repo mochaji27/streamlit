@@ -48,6 +48,38 @@ def main_page(type):
                 
             target = st.selectbox("Select Your Target", df.columns)
             df = df.drop(columns=selected_col_exc_cat).drop(columns=selected_col_exc_num)
+            st.radio(
+                "Choose Option for Data Preprocessing",
+                ("Default", "Advanced"),
+                key="preprocess_option",
+                horizontal=True
+            )
+            if st.session_state["preprocess_option"] == "Advanced":
+                st.markdown("""---""")
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.checkbox("preprocess", key="preprocess")
+                    st.checkbox("normalize", key="normalize")
+                    st.checkbox("handle_unknown_categorical", key="handle_unknown_categorical")
+                    st.checkbox("pca", key="pca")
+                    st.checkbox("ignore_low_variance", key="ignore_low_variance")
+                    st.checkbox("feature_selection", key="feature_selection")
+                with col2:
+                    st.checkbox("remove_multicollinearity", key="remove_multicollinearity")
+                    st.checkbox("remove_perfect_collinearity", key="remove_perfect_collinearity")
+                    st.checkbox("create_clusters", key="create_clusters")
+                    st.checkbox("polynomial_features", key="polynomial_features")
+                    st.checkbox("trigonometry_features", key="trigonometry_features")
+                    st.checkbox("fold_shuffle", key="fold_shuffle")
+                with col3: 
+                    st.checkbox("feature_interaction", key="feature_interaction")
+                    st.checkbox("feature_ratio", key="feature_ratio")
+                    st.checkbox("fix_imbalance", key="fix_imbalance")
+                    st.checkbox("data_split_shuffle", key="data_split_shuffle")
+                    st.checkbox("remove_outliers", key="remove_outliers")
+                    st.checkbox("data_split_stratify", key="data_split_stratify")
+                    
+            st.markdown("""---""")
             #y = df[target].values
             #X = df.drop(columns=target)
             #x = pd.get_dummies(data=x, columns=x.select_dtypes(exclude=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns)
@@ -105,7 +137,34 @@ def data_profiling(df):
 
 
 def model(df, target):
-    pycc.setup(df, target = target, silent=True, train_size=0.75, normalize=True, normalize_method='zscore', feature_selection=True, fix_imbalance=True)
+    if st.session_state["preprocess_option"] == "Default":
+        print("------------------- ini adalah default ------------------------")
+        pycc.setup(df, target = target, train_size=0.75, silent = True, use_gpu = True)
+    else:
+        print("------------------- ini adalah advanced ------------------------")
+        pycc.setup(df, target = target, train_size=0.75, 
+                   preprocess = st.session_state['preprocess'],
+                   normalize = st.session_state['normalize'],
+                   handle_unknown_categorical = st.session_state['handle_unknown_categorical'],
+                   pca = st.session_state['pca'],
+                   ignore_low_variance = st.session_state['ignore_low_variance'],
+                   remove_outliers = st.session_state['remove_outliers'],
+                   remove_multicollinearity = st.session_state['remove_multicollinearity'],
+                   remove_perfect_collinearity = st.session_state['remove_perfect_collinearity'],
+                   create_clusters = st.session_state['create_clusters'],
+                   polynomial_features = st.session_state['polynomial_features'],
+                   trigonometry_features = st.session_state['trigonometry_features'],
+                   feature_selection = st.session_state['feature_selection'], 
+                   feature_interaction = st.session_state['feature_interaction'],
+                   feature_ratio = st.session_state['feature_ratio'],
+                   fix_imbalance = st.session_state['fix_imbalance'],
+                   data_split_shuffle = st.session_state['data_split_shuffle'],
+                   data_split_stratify = st.session_state['data_split_stratify'],
+                   fold_shuffle = st.session_state['fold_shuffle'],
+                   use_gpu = True,
+                   silent = True
+                   )
+                
     setup_df = pycc.pull()
     best_clf = pycc.compare_models()
     compare_df = pycc.pull()
