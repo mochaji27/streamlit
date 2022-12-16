@@ -2,16 +2,16 @@ import streamlit as st
 import pandas as pd
 import pandas_profiling 
 from streamlit_pandas_profiling import st_profile_report
-import utils
+import utils.utils as utils
 #from tpot import TPOTClassifier, TPOTRegressor
 import numpy as np
 #import pycaret.classification as pycc
 #import h2o 
 #from h2o.automl import H2OAutoML
-import pycaret.regression as pycr
+import pycaret.classification as pycc
 
 def main_page():
-    st.title("Simple Regression AutoML using PyCaret")
+    st.title("Simple Classification AutoML using PyCaret")
     st.write("Upload your data")
     file_upload = st.file_uploader("Choose a XLSX file", type=["xlsx", "csv"])
     if file_upload is None:
@@ -43,6 +43,7 @@ def main_page():
             )
             
         target = st.selectbox("Select Your Target", df.columns)
+        
         df = df.drop(columns=selected_col_exc_cat).drop(columns=selected_col_exc_num)
         st.radio(
             "Choose Option for Data Preprocessing",
@@ -102,8 +103,13 @@ def main_page():
         model_name = st.session_state['compare_df'].iloc[0, 0]
         st.dataframe(st.session_state['compare_df'])
         st.info("Use {} model to Hyperparameter Tuning".format(model_name))
-        st.dataframe(pycr.pull())
-        pycr.plot_model(st.session_state['tune_model'], plot = 'feature', display_format='streamlit')
+        st.dataframe(pycc.pull())
+        pycc.plot_model(st.session_state['tune_model'], plot = 'feature', display_format='streamlit')
+        try:
+            pycc.plot_model(st.session_state['tune_model'], plot = 'auc', display_format='streamlit')
+        except:
+            st.error('Cannot show the AUC plot for {} model, run model again'.format(model_name))
+        pycc.plot_model(st.session_state['tune_model'], plot = 'confusion_matrix', display_format='streamlit')
         st.write(st.session_state['tune_model'])
 
         #st.info("Best Parameter : " + tune_model.get_params)
@@ -130,10 +136,10 @@ def data_profiling(df):
 def model(df, target):
     if st.session_state["preprocess_option"] == "Default":
         print("------------------- ini adalah default ------------------------")
-        pycr.setup(df, target = target, train_size=0.75, silent = True, use_gpu = True)
+        pycc.setup(df, target = target, train_size=0.75, silent = True, use_gpu = True)
     else:
         print("------------------- ini adalah advanced ------------------------")
-        pycr.setup(df, target = target, train_size=0.75, 
+        pycc.setup(df, target = target, train_size=0.75, 
                    preprocess = st.session_state['preprocess'],
                    normalize = st.session_state['normalize'],
                    handle_unknown_categorical = st.session_state['handle_unknown_categorical'],
@@ -156,11 +162,11 @@ def model(df, target):
                    silent = True
                    )
                 
-    setup_df = pycr.pull()
-    best_clf = pycr.compare_models()
-    compare_df = pycr.pull()
-    tune_model = pycr.tune_model(best_clf, choose_better = True)
-    pycr.finalize_model(tune_model)
+    setup_df = pycc.pull()
+    best_clf = pycc.compare_models()
+    compare_df = pycc.pull()
+    tune_model = pycc.tune_model(best_clf, choose_better = True)
+    pycc.finalize_model(tune_model)
     return best_clf, compare_df, tune_model
 
 def run_model():

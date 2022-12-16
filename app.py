@@ -1,7 +1,7 @@
 import streamlit as st
-import classification as cla
-import regression as reg
-import clustering as clu
+import page.classification as cla
+import page.regression as reg
+import page.clustering as clu
     
 
 

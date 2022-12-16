@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import pandas_profiling 
 from streamlit_pandas_profiling import st_profile_report
-import utils
+import utils.utils as utils
 #from tpot import TPOTClassifier, TPOTRegressor
 import numpy as np
 #import pycaret.classification as pycc
