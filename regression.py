@@ -6,7 +6,6 @@ import utils
 #from tpot import TPOTClassifier, TPOTRegressor
 import numpy as np
 #import pycaret.classification as pycc
-from sklearn.model_selection import train_test_split
 #import h2o 
 #from h2o.automl import H2OAutoML
 import pycaret.regression as pycr
