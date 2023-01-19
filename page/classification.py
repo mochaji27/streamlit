@@ -9,11 +9,12 @@ import numpy as np
 #import h2o 
 #from h2o.automl import H2OAutoML
 import pycaret.classification as pycc
+import pickle
 
 def main_page():
     st.title("Simple Classification AutoML using PyCaret")
     st.write("Upload your data")
-    file_upload = st.file_uploader("Choose a XLSX file", type=["xlsx", "csv"])
+    file_upload = st.file_uploader("Upload a XLSX file", type=["xlsx", "csv"])
     if file_upload is None:
         if 'run_model' in st.session_state:
             del st.session_state['run_model']
@@ -22,14 +23,21 @@ def main_page():
         return
 
     df = utils.check_file(file_upload)
-    tab_view, tab_profile, tab_predict = st.tabs(["View Data", "Data Profiling", "ML"])
+    tab_view, tab_profile, tab_experimental, tab_prediction = st.tabs(["View Data", "Data Profiling", "Experimental ML", "Prediction"])
+
     with tab_view:
         st.dataframe(df)
-    with tab_profile:
-        if 'data_profiling' not in st.session_state:
-            st.session_state['data_profiling'] = data_profiling(df)
-        st_profile_report(st.session_state['data_profiling'])
-    with tab_predict:
+
+    #with tab_profile:
+        #if 'data_profiling' not in st.session_state:
+        #    st.session_state['data_profiling'] = data_profiling(df)
+        #st_profile_report(st.session_state['data_profiling'])
+
+    with tab_prediction:
+        model_upload = st.file_uploader("Upload a Model ML", type=["pkl"])
+        st.button('Go', key="key_prediction_btn", on_click=prediction, args=(model_upload, file_upload))
+
+    with tab_experimental:
         list_col_numeric = df.select_dtypes(include=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns
         list_col_category = df.select_dtypes(exclude=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns
         col1, col2 = st.columns(2)
@@ -44,7 +52,7 @@ def main_page():
             
         target = st.selectbox("Select Your Target", df.columns)
         
-        df = df.drop(columns=selected_col_exc_cat).drop(columns=selected_col_exc_num)
+        list_col_exc = selected_col_exc_cat + selected_col_exc_num
         st.radio(
             "Choose Option for Data Preprocessing",
             ("Default", "Advanced"),
@@ -92,7 +100,7 @@ def main_page():
 
         if 'best_clf' not in st.session_state:
             st.info("This is Experimental Machine Learning")
-            st.session_state['best_clf'], st.session_state['compare_df'], st.session_state['tune_model'] = model(df, target)
+            st.session_state['best_clf'], st.session_state['compare_df'], st.session_state['tune_model'] = model(df, target, list_col_exc)
         #pipeline_optimizer = TPOTClassifier(generations=5, population_size=20, cv=5,
         #                    random_state=42, verbosity=2, max_eval_time_mins=60)
         #pipeline_optimizer.fit(X_train, y_train)
@@ -132,11 +140,14 @@ def main_page():
 def data_profiling(df):
     return df.profile_report()
 
+def prediction(model_upload, file_upload):
+    model = pickle.load(model_upload)
+    model.predict(file_upload)
 
-def model(df, target):
+def model(df, target, list_col_exc):
     if st.session_state["preprocess_option"] == "Default":
         print("------------------- ini adalah default ------------------------")
-        pycc.setup(df, target = target, train_size=0.75, silent = True, use_gpu = True)
+        pycc.setup(df, target = target, train_size=0.75, silent = True, use_gpu = True, ignore_features=(list_col_exc))
     else:
         print("------------------- ini adalah advanced ------------------------")
         pycc.setup(df, target = target, train_size=0.75, 
@@ -159,7 +170,8 @@ def model(df, target):
                    data_split_stratify = st.session_state['data_split_stratify'],
                    fold_shuffle = st.session_state['fold_shuffle'],
                    use_gpu = True,
-                   silent = True
+                   silent = True,
+                   ignore_features=(list_col_exc)
                    )
                 
     setup_df = pycc.pull()
