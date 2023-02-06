@@ -20,6 +20,8 @@ def main_page():
             del st.session_state['run_model']
         if 'data_profiling' in st.session_state:
             del st.session_state['data_profiling']
+        if 'result_predict' in st.session_state:
+            del st.session_state['result_predict']
         return
 
     df = utils.check_file(file_upload)
@@ -28,14 +30,49 @@ def main_page():
     with tab_view:
         st.dataframe(df)
 
-    #with tab_profile:
-        #if 'data_profiling' not in st.session_state:
-        #    st.session_state['data_profiling'] = data_profiling(df)
-        #st_profile_report(st.session_state['data_profiling'])
+    with tab_profile:
+        if 'data_profiling' not in st.session_state:
+            st.session_state['data_profiling'] = data_profiling(df)
+        st_profile_report(st.session_state['data_profiling'])
 
     with tab_prediction:
-        model_upload = st.file_uploader("Upload a Model ML", type=["pkl"])
-        st.button('Go', key="key_prediction_btn", on_click=prediction, args=(model_upload, file_upload))
+        """
+        st.radio(
+            "Select Model From",
+            ("Server", "Upload"),
+            key="select_model_from",
+            horizontal=True
+        )
+        if st.session_state["select_model_from"] == "Server":   
+            model_selected_name = st.selectbox(
+                    'Select Unique ID Model',
+                    utils.get_list_model_result()
+                    )
+            model_selected_name = "model_result\\" + model_selected_name.replace(".pkl", "")
+        else :
+            model_selected = st.file_uploader("Upload a Model ML", )
+            model_selected_name = model_selected.name.replace(".pkl", "") if model_selected is not None else model_selected
+        """
+        model_selected_name = st.selectbox(
+                    'Select Unique ID Model',
+                    utils.get_list_model_result()
+                    )
+        model_selected_name = "model_result\\" + model_selected_name.replace(".pkl", "")
+        st.button('Go', key="key_prediction_btn", on_click=prediction, args=(model_selected_name, df))
+        placeholder_result = st.empty()
+        placeholder_result.button(
+            "Download Result Prediction",
+            disabled = True
+        )
+        if 'result_predict' in st.session_state:
+            result_predict = st.session_state['result_predict']
+            st.dataframe(result_predict)
+            placeholder_result.download_button(
+                "Download Result",
+                data=result_predict.to_csv(),
+                file_name="Result.csv"
+            )
+        
 
     with tab_experimental:
         list_col_numeric = df.select_dtypes(include=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns
@@ -53,6 +90,7 @@ def main_page():
         target = st.selectbox("Select Your Target", df.columns)
         
         list_col_exc = selected_col_exc_cat + selected_col_exc_num
+
         st.radio(
             "Choose Option for Data Preprocessing",
             ("Default", "Advanced"),
@@ -85,29 +123,28 @@ def main_page():
                 st.checkbox("data_split_stratify", key="data_split_stratify")
                 
         st.markdown("""---""")
-        #y = df[target].values
-        #X = df.drop(columns=target)
-        #x = pd.get_dummies(data=x, columns=x.select_dtypes(exclude=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns)
-        #X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, test_size=0.25, random_state=2022)
-        st.button('Go', key="key_classification_btn", on_click=run_model)
+
+        unique_code = st.text_input('Unique Code', '')
+        model_unique_code = "model_{}".format(unique_code)
+        placeholder_unique_code_error = st.empty()
+        st.button('Go', key="key_classification_btn", on_click=run_model, kwargs=dict(model_unique_code = model_unique_code, placeholder_unique_code_error = placeholder_unique_code_error))
         placeholder = st.empty()
         placeholder.button(
             "Download Model",
             disabled = True
         )
+        if 'error_unique_code' in st.session_state:
+            placeholder_unique_code_error.error("Unique Code has been used!")
+            return
+        
         if 'run_model' not in st.session_state:
             return
 
         if 'best_clf' not in st.session_state:
             st.info("This is Experimental Machine Learning")
             st.session_state['best_clf'], st.session_state['compare_df'], st.session_state['tune_model'] = model(df, target, list_col_exc)
-        #pipeline_optimizer = TPOTClassifier(generations=5, population_size=20, cv=5,
-        #                    random_state=42, verbosity=2, max_eval_time_mins=60)
-        #pipeline_optimizer.fit(X_train, y_train)
-        #score = pipeline_optimizer.score(X_test, y_test)
-        #st.success(score)
-        #csf = pycc.set
 
+        placeholder_unique_code_error.empty()
         model_name = st.session_state['compare_df'].iloc[0, 0]
         st.dataframe(st.session_state['compare_df'])
         st.info("Use {} model to Hyperparameter Tuning".format(model_name))
@@ -120,34 +157,32 @@ def main_page():
         pycc.plot_model(st.session_state['tune_model'], plot = 'confusion_matrix', display_format='streamlit')
         st.write(st.session_state['tune_model'])
 
-        #st.info("Best Parameter : " + tune_model.get_params)
-        #pycc.plot_model(best_clf, plot = 'auc')
-        #pycc.save_model(tune_model, "{}_{}".format(file_upload, model_name))
-        placeholder.download_button(
-            "Download Model {}".format(model_name),
-            data=utils.download_model(st.session_state['tune_model']),
-            file_name="model_{}.pkl".format(model_name)
-        )
-        #del st.session_state['run_model']
+        pycc.save_model(st.session_state['tune_model'], "model_result\\" + model_unique_code)
+        with open('model_result\\{}.pkl'.format(model_unique_code), 'rb') as f:
+            placeholder.download_button(
+                "Download Model {}".format(unique_code),
+                data=f,
+                file_name=model_unique_code + ".pkl"
+            )
                 
 
-    
-#@st.cache()
-#def init_h2o():
-#    h2o.connect()
 
 
 def data_profiling(df):
     return df.profile_report()
 
 def prediction(model_upload, file_upload):
-    model = pickle.load(model_upload)
-    model.predict(file_upload)
+    #model = pickle.load(model_upload)
+    #print(model_upload)
+    model = pycc.load_model(model_upload)
+    
+    st.session_state['result_predict'] = pycc.predict_model(model, file_upload)
+    
 
 def model(df, target, list_col_exc):
     if st.session_state["preprocess_option"] == "Default":
         print("------------------- ini adalah default ------------------------")
-        pycc.setup(df, target = target, train_size=0.75, silent = True, use_gpu = True, ignore_features=(list_col_exc))
+        pycc.setup(df, target = target, train_size=0.75, silent = True, use_gpu = True, ignore_features=(list_col_exc), session_id = 123)
     else:
         print("------------------- ini adalah advanced ------------------------")
         pycc.setup(df, target = target, train_size=0.75, 
@@ -171,17 +206,32 @@ def model(df, target, list_col_exc):
                    fold_shuffle = st.session_state['fold_shuffle'],
                    use_gpu = True,
                    silent = True,
-                   ignore_features=(list_col_exc)
+                   ignore_features=(list_col_exc),
+                   session_id = 123
                    )
                 
     setup_df = pycc.pull()
-    best_clf = pycc.compare_models()
+    best_clf = pycc.compare_models(n_select=3)
     compare_df = pycc.pull()
-    tune_model = pycc.tune_model(best_clf, choose_better = True)
-    pycc.finalize_model(tune_model)
-    return best_clf, compare_df, tune_model
+    tuned_top3 = [pycc.tune_model(i) for i in best_clf]
+    blend = pycc.blend_models(tuned_top3)
+    stack = pycc.stack_models(tuned_top3)
+    #tune_model = pycc.tune_model(best_clf, choose_better = True)
+    best_acc_model = pycc.automl(optimize = 'Accuracy')
+    pycc.finalize_model(best_acc_model)
+    return best_clf, compare_df, best_acc_model
 
-def run_model():
+def run_model(model_unique_code, placeholder_unique_code_error):
+    list_history_model_name = utils.get_list_model_result()
+    model_unique_code += '.pkl'
+    print(model_unique_code)
+    print(list_history_model_name)
+    #print(model_unique_code in list_history_model_name)
+    if model_unique_code in list_history_model_name:
+        st.session_state['error_unique_code'] = True
+        return
     st.session_state['run_model'] = True
+    if "error_unique_code" in st.session_state:
+        del st.session_state['error_unique_code']
     if 'best_clf' in st.session_state:
         del st.session_state['best_clf']

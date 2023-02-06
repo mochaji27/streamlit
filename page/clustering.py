@@ -125,7 +125,7 @@ def main_page():
 
         placeholder.download_button(
             "Download Model {}".format(choose_model),
-            data=utils.download_model(st.session_state['model']),
+            data=utils.download_model(st.session_state['model'], "model_{}".format(choose_model)),
             file_name="model_{}.pkl".format(choose_model)
         )
         #del st.session_state['run_model']
