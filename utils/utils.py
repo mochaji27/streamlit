@@ -18,7 +18,7 @@ def download_model(model, model_name):
 
 def get_list_model_result():
     # folder path
-    dir_path = r'model_result\\'
+    dir_path = r'model_result'
 
     # list file and directories
     res = os.listdir(dir_path)
