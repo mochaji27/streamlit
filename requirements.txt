@@ -1,3 +1,4 @@
 pycaret
 streamlit
 streamlit_pandas_profiling
+pip install pydantic-settings
