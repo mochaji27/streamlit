@@ -2,6 +2,7 @@
 
 
 This is an autoML project that uses the pycaret library and also uses streamlit to build web apps. here you can search for the best machine learning models automatically without using coding at all, and also we can download machine learning models that have been made.
+
 This project focuses on AutoML, designed specifically for high-level roles such as supervisors or managerial positions. It enables individuals with limited knowledge of machine learning to use this tool as an initial assessment of the data. The system allows them to explore the potential of machine learning without requiring in-depth expertise or understanding of its proper implementation.
 
 
