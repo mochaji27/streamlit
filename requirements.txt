@@ -2,3 +2,4 @@ pycaret
 streamlit
 streamlit_pandas_profiling
 pydantic-settings
+openpyxl
