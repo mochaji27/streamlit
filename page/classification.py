@@ -205,7 +205,6 @@ def model(df, target, list_col_exc):
                    data_split_stratify = st.session_state['data_split_stratify'],
                    fold_shuffle = st.session_state['fold_shuffle'],
                    use_gpu = True,
-                   silent = True,
                    ignore_features=(list_col_exc),
                    session_id = 123
                    )
