@@ -103,7 +103,6 @@ def main_page():
             with col1:
                 st.checkbox("preprocess", key="preprocess")
                 st.checkbox("normalize", key="normalize")
-                st.checkbox("handle_unknown_categorical", key="handle_unknown_categorical")
                 st.checkbox("pca", key="pca")
                 st.checkbox("ignore_low_variance", key="ignore_low_variance")
                 st.checkbox("feature_selection", key="feature_selection")
@@ -188,7 +187,6 @@ def model(df, target, list_col_exc):
         pycc.setup(df, target = target, train_size=0.75, 
                    preprocess = st.session_state['preprocess'],
                    normalize = st.session_state['normalize'],
-                   handle_unknown_categorical = st.session_state['handle_unknown_categorical'],
                    pca = st.session_state['pca'],
                    ignore_low_variance = st.session_state['ignore_low_variance'],
                    remove_outliers = st.session_state['remove_outliers'],
