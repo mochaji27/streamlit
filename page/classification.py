@@ -182,7 +182,7 @@ def prediction(model_upload, file_upload):
 def model(df, target, list_col_exc):
     if st.session_state["preprocess_option"] == "Default":
         print("------------------- ini adalah default ------------------------")
-        pycc.setup(df, target = target, train_size=0.75, silent = True, use_gpu = True, ignore_features=(list_col_exc), session_id = 123)
+        pycc.setup(df, target = target, train_size=0.75, use_gpu = True, ignore_features=(list_col_exc), session_id = 123)
     else:
         print("------------------- ini adalah advanced ------------------------")
         pycc.setup(df, target = target, train_size=0.75, 
