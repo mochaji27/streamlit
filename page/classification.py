@@ -104,18 +104,12 @@ def main_page():
                 st.checkbox("preprocess", key="preprocess")
                 st.checkbox("normalize", key="normalize")
                 st.checkbox("pca", key="pca")
-                st.checkbox("ignore_low_variance", key="ignore_low_variance")
                 st.checkbox("feature_selection", key="feature_selection")
             with col2:
                 st.checkbox("remove_multicollinearity", key="remove_multicollinearity")
-                st.checkbox("remove_perfect_collinearity", key="remove_perfect_collinearity")
-                st.checkbox("create_clusters", key="create_clusters")
                 st.checkbox("polynomial_features", key="polynomial_features")
-                st.checkbox("trigonometry_features", key="trigonometry_features")
                 st.checkbox("fold_shuffle", key="fold_shuffle")
             with col3: 
-                st.checkbox("feature_interaction", key="feature_interaction")
-                st.checkbox("feature_ratio", key="feature_ratio")
                 st.checkbox("fix_imbalance", key="fix_imbalance")
                 st.checkbox("data_split_shuffle", key="data_split_shuffle")
                 st.checkbox("remove_outliers", key="remove_outliers")
@@ -188,16 +182,10 @@ def model(df, target, list_col_exc):
                    preprocess = st.session_state['preprocess'],
                    normalize = st.session_state['normalize'],
                    pca = st.session_state['pca'],
-                   ignore_low_variance = st.session_state['ignore_low_variance'],
                    remove_outliers = st.session_state['remove_outliers'],
                    remove_multicollinearity = st.session_state['remove_multicollinearity'],
-                   remove_perfect_collinearity = st.session_state['remove_perfect_collinearity'],
-                   create_clusters = st.session_state['create_clusters'],
                    polynomial_features = st.session_state['polynomial_features'],
-                   trigonometry_features = st.session_state['trigonometry_features'],
                    feature_selection = st.session_state['feature_selection'], 
-                   feature_interaction = st.session_state['feature_interaction'],
-                   feature_ratio = st.session_state['feature_ratio'],
                    fix_imbalance = st.session_state['fix_imbalance'],
                    data_split_shuffle = st.session_state['data_split_shuffle'],
                    data_split_stratify = st.session_state['data_split_stratify'],
