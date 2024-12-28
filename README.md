@@ -7,6 +7,6 @@ This project focuses on AutoML, designed specifically for high-level roles such 
 
 
 ## Step to running
-1. Create virtual environemnt with python version 3.10.12
+1. Create virtual environemnt with python version 3.10.16
 2. use that virtual environment and install library in requirements.txt
 3. run code "streamlit run app.y"
