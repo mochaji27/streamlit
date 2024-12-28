@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-import pandas_profiling 
+#import pandas_profiling 
+from ydata_profiling import ProfileReport
 from streamlit_pandas_profiling import st_profile_report
 import utils.utils as utils
 #from tpot import TPOTClassifier, TPOTRegressor
@@ -149,7 +150,10 @@ def main_page():
         st.dataframe(st.session_state['compare_df'])
         st.info("Use {} model to Hyperparameter Tuning".format(model_name))
         st.dataframe(pycr.pull())
-        pycr.plot_model(st.session_state['tune_model'], plot = 'feature', display_format='streamlit')
+        try:
+            pycr.plot_model(st.session_state['tune_model'], plot = 'feature', display_format='streamlit')
+        except:
+            st.write("The model doesn't have plot")
         st.write(st.session_state['tune_model'])
 
         #st.info("Best Parameter : " + tune_model.get_params)
@@ -179,46 +183,46 @@ def prediction(model_upload, file_upload):
 
 
 def data_profiling(df):
-    return df.profile_report()
+    return ProfileReport(df)
 
 
 def model(df, target, list_col_exc):
     if st.session_state["preprocess_option"] == "Default":
         print("------------------- ini adalah default ------------------------")
-        pycr.setup(df, target = target, train_size=0.75, silent = True, use_gpu = True, ignore_features=(list_col_exc), session_id = 123)
+        pycr.setup(df, target = target, train_size=0.75, ignore_features=(list_col_exc), session_id = 123)
     else:
         print("------------------- ini adalah advanced ------------------------")
         pycr.setup(df, target = target, train_size=0.75, 
                    preprocess = st.session_state['preprocess'],
                    normalize = st.session_state['normalize'],
-                   handle_unknown_categorical = st.session_state['handle_unknown_categorical'],
                    pca = st.session_state['pca'],
-                   ignore_low_variance = st.session_state['ignore_low_variance'],
                    remove_outliers = st.session_state['remove_outliers'],
                    remove_multicollinearity = st.session_state['remove_multicollinearity'],
-                   remove_perfect_collinearity = st.session_state['remove_perfect_collinearity'],
-                   create_clusters = st.session_state['create_clusters'],
                    polynomial_features = st.session_state['polynomial_features'],
-                   trigonometry_features = st.session_state['trigonometry_features'],
                    feature_selection = st.session_state['feature_selection'], 
-                   feature_interaction = st.session_state['feature_interaction'],
-                   feature_ratio = st.session_state['feature_ratio'],
-                   fix_imbalance = st.session_state['fix_imbalance'],
                    data_split_shuffle = st.session_state['data_split_shuffle'],
                    data_split_stratify = st.session_state['data_split_stratify'],
                    fold_shuffle = st.session_state['fold_shuffle'],
                    use_gpu = True,
                    ignore_features=(list_col_exc),
-                   silent = True,
                    session_id = 123
                    )
                 
 
 
     setup_df = pycr.pull()
-    best_clf = pycr.compare_models(n_select=3)
+    best_clf = pycr.compare_models(n_select=6)
     compare_df = pycr.pull()
-    tuned_top3 = [pycr.tune_model(i) for i in best_clf]
+    tuned_top3 = []
+    for i in best_clf:
+        try:
+            tuned_top3.append(pycr.tune_model(i))
+        except:
+            continue
+        if len(tuned_top3) == 3:
+            break
+        
+    # tuned_top3 = [pycr.tune_model(i) for i in best_clf]
     blend = pycr.blend_models(tuned_top3)
     stack = pycr.stack_models(tuned_top3)
     #tune_model = pycc.tune_model(best_clf, choose_better = True)
@@ -237,6 +241,7 @@ def run_model(model_unique_code, placeholder_unique_code_error):
         st.session_state['error_unique_code'] = True
         return
     st.session_state['run_model'] = True
-    del st.session_state['error_unique_code']
+    if "error_unique_code" in st.session_state:
+        del st.session_state['error_unique_code']
     if 'best_clf' in st.session_state:
         del st.session_state['best_clf']
