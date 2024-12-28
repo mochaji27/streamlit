@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import pandas_profiling 
+from ydata_profiling import ProfileReport
 from streamlit_pandas_profiling import st_profile_report
 import utils.utils as utils
 #from tpot import TPOTClassifier, TPOTRegressor
@@ -25,10 +25,12 @@ def main_page():
     tab_view, tab_profile, tab_predict = st.tabs(["View Data", "Data Profiling", "ML"])
     with tab_view:
         st.dataframe(df)
+        
     with tab_profile:
         if 'data_profiling' not in st.session_state:
             st.session_state['data_profiling'] = data_profiling(df)
         st_profile_report(st.session_state['data_profiling'])
+
     with tab_predict:
         list_col_numeric = df.select_dtypes(include=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns
         list_col_category = df.select_dtypes(exclude=[np.float64, np.int8, np.int16, np.int32, np.int64]).columns
@@ -138,13 +140,13 @@ def main_page():
 
 
 def data_profiling(df):
-    return df.profile_report()
+    return ProfileReport(df)
 
 
 def model(df, choose_model, col_exclude):
     if st.session_state["preprocess_option"] == "Default":
         print("------------------- ini adalah default ------------------------")
-        pyccl.setup(df, silent = True, use_gpu = True)
+        pyccl.setup(df, use_gpu = True)
     else:
         print("------------------- ini adalah advanced ------------------------")
         pyccl.setup(df, 
@@ -167,7 +169,6 @@ def model(df, choose_model, col_exclude):
                    data_split_stratify = st.session_state['data_split_stratify'],
                    fold_shuffle = st.session_state['fold_shuffle'],
                    use_gpu = True,
-                   silent = True,
                    ignore_features=col_exclude
                    )
                 
