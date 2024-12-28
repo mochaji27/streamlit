@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import pandas_profiling 
+from ydata_profiling import ProfileReport
 from streamlit_pandas_profiling import st_profile_report
 import utils.utils as utils
 #from tpot import TPOTClassifier, TPOTRegressor
@@ -142,7 +142,10 @@ def main_page():
         st.dataframe(st.session_state['compare_df'])
         st.info("Use {} model to Hyperparameter Tuning".format(model_name))
         st.dataframe(pycc.pull())
-        pycc.plot_model(st.session_state['tune_model'], plot = 'feature', display_format='streamlit')
+        try:
+            pycc.plot_model(st.session_state['tune_model'], plot = 'feature', display_format='streamlit')
+        except:
+            st.error('Cannot show the feature plot for {} model, run model again'.format(model_name))
         try:
             pycc.plot_model(st.session_state['tune_model'], plot = 'auc', display_format='streamlit')
         except:
@@ -162,7 +165,7 @@ def main_page():
 
 
 def data_profiling(df):
-    return df.profile_report()
+    return ProfileReport(df)
 
 def prediction(model_upload, file_upload):
     #model = pickle.load(model_upload)
@@ -175,7 +178,7 @@ def prediction(model_upload, file_upload):
 def model(df, target, list_col_exc):
     if st.session_state["preprocess_option"] == "Default":
         print("------------------- ini adalah default ------------------------")
-        pycc.setup(df, target = target, train_size=0.75, use_gpu = False, ignore_features=(list_col_exc), session_id = 123, verbose = False)
+        pycc.setup(df, target = target, train_size=0.75, ignore_features=(list_col_exc), session_id = 123, verbose = False)
     else:
         print("------------------- ini adalah advanced ------------------------")
         pycc.setup(df, target = target, train_size=0.75, 
@@ -190,16 +193,24 @@ def model(df, target, list_col_exc):
                    data_split_shuffle = st.session_state['data_split_shuffle'],
                    data_split_stratify = st.session_state['data_split_stratify'],
                    fold_shuffle = st.session_state['fold_shuffle'],
-                   use_gpu = False,
+                   use_gpu = True,
                    ignore_features=(list_col_exc),
                    session_id = 123,
                    verbose = False
                    )
                 
     setup_df = pycc.pull()
-    best_clf = pycc.compare_models(n_select=3)
+    best_clf = pycc.compare_models(n_select=6)
     compare_df = pycc.pull()
-    tuned_top3 = [pycc.tune_model(i) for i in best_clf]
+    tuned_top3 = []
+    for i in best_clf:
+        try:
+            tuned_top3.append(pycc.tune_model(i))
+        except:
+            continue
+        if len(tuned_top3) == 3:
+            break
+    #tuned_top3 = [pycc.tune_model(i) for i in best_clf]
     blend = pycc.blend_models(tuned_top3)
     stack = pycc.stack_models(tuned_top3)
     #tune_model = pycc.tune_model(best_clf, choose_better = True)
